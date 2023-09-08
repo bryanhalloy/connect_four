@@ -1,28 +1,97 @@
-SLEEP_SECS = 0.01
-WIN_IN_A_ROW = 4
-PLAYER_1_MARKER = "🔵"
-PLAYER_2_MARKER = "🔴"
+# ==================================================================
+module Configs
+  SLEEP_SECS = 0.5
+  COMPUTER_THINK_SECS = SLEEP_SECS * 2.0
+  WIN_IN_A_ROW = 4
+  PLAYER_1_MARKER = "🔵"
+  PLAYER_2_MARKER = "🔴"
+  BOARD_COLUMNS = 7
+  BOARD_ROWS = 6
+end
 
 
-
-# Nouns + Verbs:
-# board
-# -achieve four in a row
-# square
-# chip
-# player
-# -takes a turn
-
-
+# ==================================================================
 class Board
-  attr_accessor :column_count, :row_count, :squares
+  include Configs
   
   def initialize (column_count, row_count)
-    self.column_count = column_count
-    self.row_count = row_count
+    @column_count = column_count
+    @row_count = row_count
     initiate_squares
   end
 
+
+  def render_ui
+    draw_header
+    draw_board
+  end
+
+
+  def get_available_columns
+    list = squares.reject { |_, square_object| square_object.occupied }
+    list = list.map { |coordinate_key, _| coordinate_key[0] }.uniq.sort
+    list
+  end
+
+
+  def drop_chip(column_number_chosen, chip_dropped)
+    #Determine what square will be taken (e.g. chip drops to the bottom of the column)
+    square_taken_coordinates = squares.select do |coordinate_key, square_object|
+      square_object.occupied == false && coordinate_key[0] == column_number_chosen
+    end.keys.sort.first
+    chosen_square = squares[square_taken_coordinates]
+    #Assign dropped chip to that square
+    chosen_square.display = chip_dropped
+    chosen_square.occupied = true
+  end
+
+
+  def full?
+    get_available_columns.empty?
+  end
+
+
+  def winner
+    winning_player = nil
+    [ ["player1", PLAYER_1_MARKER] ,  ["player2", PLAYER_2_MARKER] ].each do |player_array|
+      player_squares = @squares.select { |_coordinates, square| square.display == player_array[1] }
+      
+      player_squares.each do |coordinates, _square|
+        # Build win conditions (four different directions)
+        vertical_win_squares = []
+        1.upto(WIN_IN_A_ROW - 1) do |num|
+          vertical_win_squares << player_squares.keys.include?([coordinates[0], coordinates[1] + num])
+        end
+        
+        horizontal_win_squares = []
+        1.upto(WIN_IN_A_ROW - 1) do |num|
+          horizontal_win_squares << player_squares.keys.include?([coordinates[0] + num, coordinates[1]])
+        end
+
+        diagonal_up_win_squares = []
+        1.upto(WIN_IN_A_ROW - 1) do |num|
+          diagonal_up_win_squares << player_squares.keys.include?([coordinates[0] + num, coordinates[1] + num])
+        end
+        
+        diagonal_down_win_squares = []
+        1.upto(WIN_IN_A_ROW - 1) do |num|
+          diagonal_down_win_squares << player_squares.keys.include?([coordinates[0] + num, coordinates[1] - num])
+        end
+
+        # Check if a winner in any direction
+        is_winner = [vertical_win_squares.all?,
+                      horizontal_win_squares.all?, 
+                      diagonal_up_win_squares.all?, 
+                      diagonal_down_win_squares.all?].any?
+        winning_player = player_array[0] if is_winner 
+      end
+    end
+    winning_player
+  end
+
+  private
+
+  attr_accessor :column_count, :row_count, :squares
 
   def initiate_squares
     @squares = {}
@@ -33,10 +102,15 @@ class Board
     end
   end
 
+  def draw_header
+    puts "\n"
+    puts "- CONNECT FOUR -"
+    puts "\n"
+  end
 
   def draw_board
     drawing = ""
-    #Draw squares
+    # Draw squares
     (0.. row_count + 1).each do |row_num|
       (0..column_count + 1).each do |column_num|
         if row_num == 0 || row_num >  row_count
@@ -55,7 +129,7 @@ class Board
       end
       drawing << "\n"
     end
-    #Draw column numbers
+    # Draw column numbers
     (0..column_count + 1).each do |column_num|
       if column_num == 0 || column_num > column_count
         drawing << "  "
@@ -63,86 +137,15 @@ class Board
         drawing << column_num.to_s + " "
       end
     end
+    # Display
     puts drawing
-
-    puts "----- debug---"
+    puts "\n"
   end
-
-  def get_available_columns
-    list = @squares.reject { |_, square_object| square_object.occupied }
-    list = list.map { |coordinate_key, _| coordinate_key[0] }.uniq.sort
-    list
-  end
-
-
-  def drop_chip(column_number, chip)
-    list = @squares.select do |coordinate_key, square_object|
-      square_object.occupied == false && coordinate_key[0] == column_number
-    end
-    coordinates = list.keys.sort[0]
-    chosen_square = @squares[coordinates]
-    chosen_square.display = chip
-    chosen_square.occupied = true
-  end
-
-  def full
-    get_available_columns.empty?
-  end
-
-  def winner
-    winning_player = nil
-    [ ["player1", PLAYER_1_MARKER] ,  ["player2", PLAYER_2_MARKER] ].each do |player_array|
-      player_squares = @squares.select { |_coordinates, square| square.display == player_array[1] }
-      
-      player_squares.each do |coordinates, _square|
-        # check vertical win condition
-        if player_squares.keys.include?([coordinates[0], coordinates[1] + 1]) &&
-          player_squares.keys.include?([coordinates[0], coordinates[1] + 2]) && 
-          player_squares.keys.include?([coordinates[0], coordinates[1] + 3])
-          winning_player = player_array[0] 
-        
-        #check horizontal win condition
-        elsif player_squares.keys.include?([coordinates[0] + 1, coordinates[1]]) &&
-          player_squares.keys.include?([coordinates[0] + 2, coordinates[1]]) && 
-          player_squares.keys.include?([coordinates[0] + 3, coordinates[1]])
-          winning_player = player_array[0] 
-
-        #check diagonal up win condition
-        elsif player_squares.keys.include?([coordinates[0] + 1, coordinates[1] + 1]) &&
-          player_squares.keys.include?([coordinates[0] + 2, coordinates[1] + 2]) && 
-          player_squares.keys.include?([coordinates[0] + 3, coordinates[1] + 3])
-          winning_player = player_array[0] 
-
-        #check diagonal down win condition
-        elsif player_squares.keys.include?([coordinates[0] + 1, coordinates[1] - 1]) &&
-          player_squares.keys.include?([coordinates[0] + 2, coordinates[1] - 2]) && 
-          player_squares.keys.include?([coordinates[0] + 3, coordinates[1] - 3])
-          winning_player = player_array[0] 
-        end
-      end
-    end
-    
-  
-    # select every non-empty square
-    #   start in bottom left, and move across row, then up to next column
-    #   for each non-empty square
-    #     Get its color
-    #       check and see if the next three above it are same color
-    #       check and see if three diagonal (up and right) are same color)
-    #       Check and see if three to the right are same color
-    #     If any above are true, then mark them as winner
-    #   else go to the next non-empty square
-
-    winning_player
-  end
-
-
-
-
 
 end
 
 
+# ==================================================================
 class Square
   attr_accessor :occupied, :display
 
@@ -157,19 +160,24 @@ class Square
 end
 
 
-
+# ==================================================================
 class Player
-  attr_accessor :name, :chip
+  include Configs
+  attr_accessor :chip
+  attr_reader :name
 
   def initialize(name, chip)
-    self.name = name
-    self.chip = chip
+    @name = name
+    @chip = chip
   end
 
   def execute_turn(board)
     column_number = choose_column(board)
-    board.drop_chip(column_number, self.chip) # board update backend squares
-    # determine winner (move outside)
+    board.drop_chip(column_number, chip)
+  end
+
+  def choose_column(board)
+    puts "#{name} (#{chip}) choose a column number:"
   end
 end
 
@@ -177,33 +185,34 @@ end
 class Human < Player
 end
 
+
 class Computer < Player
   def choose_column(board)
-    puts "#{name} (#{chip})- make a selection:"
+    super
+    sleep(COMPUTER_THINK_SECS)
     selected_column = board.get_available_columns.sample
-    puts "#{name} (#{chip}) selected column #{selected_column}"
+    puts "#{name} (#{chip}) selected column #{selected_column}."
     selected_column
   end
 end
 
 
-
+# ==================================================================
 class ConnectFour
+  include Configs
+
   def initialize
-    @board = Board.new(7,6)
+    @board = Board.new(BOARD_COLUMNS,BOARD_ROWS)
     @player1 = Computer.new("Bluebee", PLAYER_1_MARKER)
     @player2 = Computer.new("Red Rover", PLAYER_2_MARKER)
-
   end
 
   def play_game
     system("clear")
-    @board.draw_board
+    @board.render_ui
     sleep(SLEEP_SECS)
 
     player1_turn = true
-
-
     loop do
       if player1_turn
         @player1.execute_turn(@board)
@@ -212,32 +221,33 @@ class ConnectFour
         @player2.execute_turn(@board)
         player1_turn = true
       end
+
       sleep(SLEEP_SECS)
       system("clear")
-      @board.draw_board
+
+      @board.render_ui
       sleep(SLEEP_SECS)
 
-      
       winning_player = @board.winner
       if winning_player
-        puts "We have a winner! #{winning_player}"
+        puts "#{winning_player} wins!!"
         break
       end
 
-      break if @board.full
-
+      break if @board.full?
     end
-    
-
-    #   prompt_turn_input
-    #   update_board
-    #   determine winner or tie
-    #   break if win or tie
-    # display goodbye
+    display_goodbye
   end
 
+  private
+
+  def display_goodbye
+    puts "\n\n"
+    puts "----------------------"
+    puts "Thank you for playing. Goodbye."
+  end
 
 end
 
-
+# ==================================================================
 ConnectFour.new.play_game
