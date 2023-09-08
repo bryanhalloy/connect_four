@@ -1,0 +1,12 @@
+Connect Four is a game between two players where each player takes a turn dropping a chip into a vertical gameboard, filling game squares via gravity. When one player has four in a row (in any direction), they win. If the board fills up with chips, then it is a tie. 
+
+
+Nouns + Verbs:
+board
+-achieve four in a row
+square
+chip
+player
+-takes a turn
+
+

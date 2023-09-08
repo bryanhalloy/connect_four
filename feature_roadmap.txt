@@ -1,0 +1,24 @@
+Connect Four
+Feature Roadmap
+
+
+
+In Progress----------------------------------------------------------
+- Push to GitHub
+
+
+On Deck--------------------------------------------------------------
+- Have a good and persistent header.
+- Have a good display messages
+- Refactor to get clean code
+
+
+Backlog--------------------------------------------------------------
+- Make the winning series of 4 light up or similar
+
+
+
+
+
+COMPLETE=============================================================
+- Build a working version of the game, to play against the computer.
