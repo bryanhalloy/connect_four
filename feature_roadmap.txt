@@ -3,27 +3,41 @@ Feature Roadmap
 
 
 
-In Progress----------------------------------------------------------
+IN PROGRESS----------------------------------------------------------
+- Enable intelligent selection of moves
 
 
 
 
 On Deck--------------------------------------------------------------
-- Enable robot names
-- Enable human player
+
 
 
 Backlog--------------------------------------------------------------
-- Make the winning series of 4 light up or similar
 - Implement rubocop
-- Make coordinates be a hash (instead of array) so its easier to read
-- Make chip tracking based on player, not chip (?)
-- Only show available column numbers on board
-- Have a good display messages
+- Enable human player
 
+
+
+Low priority--------------------------------------------------------------
+- Make coordinates be a hash (instead of array) so its easier to read
 
 
 COMPLETE=============================================================
+
+v0.1.2
+- Enable robot names
+- Center the display with appropriate margins
+- Show row numbers
+- Show player names and colors at the top header
+- Only show available column numbers on board
+- Make chip tracking based on player, not chip
+- Make the winning series of 4 light up or similar
+- Enable show history of moves
+- Make a standard message box to display messages. Make it have a minimum height
+- Have good display messages
+- Enable alternating or random starter
+
 
 v0.1.1
 - Have a good and persistent header.
